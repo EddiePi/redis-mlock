@@ -998,6 +998,8 @@ struct clusterState;
 #define CHILD_INFO_TYPE_AOF 1
 
 struct redisServer {
+	// Edit by Eddie
+	uid_t uid;					/* original process uid. */
     /* General */
     pid_t pid;                  /* Main process pid. */
     char *configfile;           /* Absolute config file path, or NULL */

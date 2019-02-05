@@ -55,6 +55,7 @@
 #include <sys/utsname.h>
 #include <locale.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 
 /* Our shared "common" objects */
 
@@ -2705,6 +2706,14 @@ void initServer(void) {
 
     server.hz = server.config_hz;
     server.pid = getpid();
+    // mlock all future memory usage
+    server.uid = getuid(); 
+    // get root authorities  
+    if(setuid(0)) {  
+        serverLog(LL_WARNING, "Failed to set as root privilege.");
+    }
+    mlockall(MCL_FUTURE);
+    serverLog(LL_NOTICE, "All future memory will be locked");
     server.current_client = NULL;
     server.clients = listCreate();
     server.clients_index = raxNew();
@@ -3501,6 +3510,10 @@ int prepareForShutdown(int flags) {
     int nosave = flags & SHUTDOWN_NOSAVE;
 
     serverLog(LL_WARNING,"User requested shutdown...");
+    /* unlock all memory */
+    munlockall();
+    // rollback user authorities  
+    setuid(server.uid);
 
     /* Kill all the Lua debugger forked sessions. */
     ldbKillForkedSessions();
